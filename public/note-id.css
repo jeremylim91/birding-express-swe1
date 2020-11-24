@@ -1,0 +1,40 @@
+body {
+  background-color: #5a5a6e;
+  /* background-image: url("https://assets.dryicons.com/uploads/icon/svg/5158/662be99f-430e-4161-8559-e0d3c952ddab.svg"); */
+}
+
+.container {
+  max-width: 800px;
+  border: solid rgba(255, 255, 255, 0.63);
+  margin-top: 20px;
+  background-color: #f8f9fa;
+}
+.unorderedList {
+  background-color: rgba(255, 255, 255, 0.63);
+}
+.row {
+  border-bottom: solid black;
+}
+
+.divForImage {
+  background-image: url("https://assets.dryicons.com/uploads/icon/svg/5158/662be99f-430e-4161-8559-e0d3c952ddab.svg");
+  opacity: 0.8;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+#mainCol4 {
+  /* background-image: url("https://assets.dryicons.com/uploads/icon/svg/5158/662be99f-430e-4161-8559-e0d3c952ddab.svg");
+  opacity: 0.8;
+  background-size: contain;
+  background-repeat: no-repeat; */
+  font-family: "Big Shoulders Stencil Display", cursive;
+}
+
+#buttonCol {
+  border-left: none;
+}
+#mainCol5 {
+  display: flex;
+  justify-content: flex;
+}

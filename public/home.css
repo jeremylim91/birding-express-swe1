@@ -1,0 +1,47 @@
+body {
+  background-color: #5a5a6e;
+}
+.container {
+  margin-top: 20px;
+  background-color: #ababba;
+  /* background-image: url("https://assets.dryicons.com/uploads/icon/svg/5158/662be99f-430e-4161-8559-e0d3c952ddab.svg"); */
+  max-width: 800px;
+}
+
+#mainCol1 {
+  color: white;
+  margin-top: 10px;
+}
+#mainCol1 > h1 {
+  background-color: black;
+  text-align: center;
+}
+
+#mainCol2 {
+  display: flex;
+  justify-content: center;
+}
+#mainCol2 > div,
+#mainCol2 > form {
+  display: inline;
+  padding: 5px;
+  vertical-align: top;
+}
+
+#mainCol4 {
+  padding-bottom: 20px;
+}
+
+/* .mainCol4SubRow{
+  min-height: 80px;
+  background-color: hotpink;
+  display: flex;
+  align-items: baseline;
+} */
+
+.mainCol4SubRow:nth-child(even) {
+  background-color: #b6bdd1;
+}
+.mainCol4SubRow:nth-child(odd) {
+  background-color: #b8b5ba;
+}
