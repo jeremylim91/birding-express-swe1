@@ -1,0 +1,26 @@
+<%-include('partials/head.ejs', {stylesheet: '/signUp.css'})%>
+<body>
+    <%-include('partials/navBar.ejs')%>
+
+  <div class= 'container'>
+    <div class='row'>
+      <div class='col'>
+        Sign up to become a member and receive the most execiting news about our feathered friends!
+      </div>
+    </div>
+    <div class='row'>
+      <div clas='col'>
+        <form action= '/signUp' method= 'POST'>
+          <label for="fUserName"> Username: </label>
+          <input type='text' name='fUserName' id='fUserName'>
+          <label for='fPassword'>Password: </label>
+          <input type='text' name='fPassword' id='fPassword'>
+          <input type='submit' value='submit'>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <%-include('partials/footer.ejs')%>
+</body>
+</html>
