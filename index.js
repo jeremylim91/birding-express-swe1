@@ -37,6 +37,7 @@ app.get('/note', (req, res) => {
     res.status(403).send('Only members can post observations. Please or sign up to proceed.');
     return;
   }
+  // get species from the species table to display the  dropdown
   const sqlQuery = 'SELECT * FROM species';
   pool.query(sqlQuery, (err, result) => {
     if (err) {
@@ -44,20 +45,50 @@ app.get('/note', (req, res) => {
       return;
     }
     const data = { species: result.rows };
-    res.render('note', data);
+    // get data from the behavior column to display via checkboxes
+    const behaviorQuery = 'SELECT * FROM behaviors_table';
+    pool.query(behaviorQuery, (behaviorQueryErr, behaviorQueryResult) => {
+      if (behaviorQueryErr) {
+        console.log(`Error: ${behaviorQueryErr}`);
+      }
+      const behaviorsToDisplay = behaviorQueryResult.rows;
+      console.log('  behaviors to display is :');
+      console.log(behaviorsToDisplay);
+
+      data.behaviors = behaviorsToDisplay;
+
+      console.log('data is:');
+      console.log(data);
+      res.render('note', data);
+    });
   });
 });
 
 app.post('/note', (req, res) => {
   console.log('request to post  came in');
-
-  const { fDate, fBehavior, fFlockSize } = req.body;
-  const sqlQuery = 'INSERT INTO notes (date, behavior, flock_size, user_id) VALUES ($1, $2, $3, $4) RETURNING *';
-  const inputData = [`${fDate}`, `${fBehavior}`, `${fFlockSize}`, `${req.cookies.username}`];
+  const behaviors = req.body.behavior_ids;
+  const {
+    fDate, fBehavior, fFlockSize, fSpeciesId,
+  } = req.body;
+  const sqlQuery = 'INSERT INTO notes (date, behavior, flock_size, user_id, species_id) VALUES ($1, $2, $3, $4, $5) RETURNING *';
+  const inputData = [`${fDate}`, `${fBehavior}`, `${fFlockSize}`, `${req.cookies.username}`, `${fSpeciesId}`];
   pool.query(sqlQuery, inputData, (err, result) => {
     if (err) {
       console.log(`sql query error: ${err}`);
+      return;
     }
+    behaviors.forEach((element) => {
+      const insertBehaviorIds = `INSERT INTO notes_behaviors_table (note_id, behavior_id) VALUES(${result.rows[0].id}, ${element}) RETURNING *`;
+      pool.query(insertBehaviorIds, (insertQueryErr, insertQueryResult) => {
+        if (insertQueryErr) {
+          console.log(`query error: ${insertQueryErr}`);
+          return;
+        }
+        console.table(insertQueryResult.rows);
+        console.log('successfully added');
+      });
+    });
+    console.log('redirecting page now');
     res.redirect(`/note/${result.rows[0].id}`);
   });
 });

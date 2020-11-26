@@ -39,13 +39,19 @@
               required
             />
             <br/>
-            <label for ='species_id'>Species: </label>
-            <select name ='species_id' id= 'species_id'>
+            <label for ='fSpeciesId'>Species: </label>
+            <select name ='fSpeciesId' id= 'fSpeciesId'>
               <%species.forEach(element => { %>
                 <option value= "<%=element.id%>"><%=element.name%></option>
              <% }); %>
             </select>
-            <br />
+                 
+            <div>Observed behaviors: </div>
+            <% behaviors.forEach((element) => { %>
+            <label><%= element.description %></label>
+            <input type="checkbox" name="behavior_ids" value="<%= element.id %>" />
+            <% }); %>
+            <br>
             <input type="submit" value="Submit" />
           </form>
         </div>
