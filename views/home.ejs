@@ -51,8 +51,7 @@
                 </div>
                 <div class="col col mainCol4SubCol"><%#=element.city%></div>
                 <div class="col col mainCol4SubCol">
-                  <form
-                    action="/sighting/<%#= element.globalIndex %>/delete?_method=DELETE"
+                  <form action="/<%= element.id%>/delete?_method=DELETE"
                     method="POST"
                   >
                     <input

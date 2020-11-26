@@ -37,7 +37,15 @@ app.get('/note', (req, res) => {
     res.status(403).send('Only members can post observations. Please or sign up to proceed.');
     return;
   }
-  res.render('note');
+  const sqlQuery = 'SELECT * FROM species';
+  pool.query(sqlQuery, (err, result) => {
+    if (err) {
+      console.log(`error: ${err}`);
+      return;
+    }
+    const data = { species: result.rows };
+    res.render('note', data);
+  });
 });
 
 app.post('/note', (req, res) => {
@@ -144,7 +152,7 @@ app.post('/login', (req, res) => {
     if (user.password === fPassword) {
       console.log('credentials are legit');
       res.cookie('loggedIn', true);
-      // res.cookie('username', user.email);
+      res.cookie('username', user.email);
       res.send('Login succesful!');
     } else {
       // password didn't match
@@ -157,17 +165,24 @@ app.post('/login', (req, res) => {
   });
 });
 
-// app.delete('/logout', (req, res) => {
-//   const { index } = req.params;
-//   read('data.json', (data, err) => {
-//     // identify target content to delete and splice it out of the array
-//     data.sightings.splice(index, 1);
-//     // write the data to the file
-//     write('data.json', data, (doneData) => {
-//       console.log('done!');
-//       res.redirect('/');
-//     });
-//   });
-// });
+app.get('/logout', (req, res) => {
+  res.clearCookie('loggedIn');
+  res.clearCookie('username');
+  res.redirect('/');
+});
+
+// delete recordings on main page and database
+app.delete('/:index/delete', (req, res) => {
+  const { index } = req.params;
+  console.log(`index is: ${index}`);
+  const sqlQuery = `DELETE FROM notes WHERE id=${index}`;
+  pool.query(sqlQuery, (err, result) => {
+    if (err) {
+      console.log(`query err: ${err}`);
+    }
+    console.table(result.rows);
+    res.redirect('/');
+  });
+});
 
 app.listen(PORT);

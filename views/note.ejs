@@ -37,7 +37,15 @@
               id="fFlockSize"
               name="fFlockSize"
               required
-            /><br />
+            />
+            <br/>
+            <label for ='species_id'>Species: </label>
+            <select name ='species_id' id= 'species_id'>
+              <%species.forEach(element => { %>
+                <option value= "<%=element.id%>"><%=element.name%></option>
+             <% }); %>
+            </select>
+            <br />
             <input type="submit" value="Submit" />
           </form>
         </div>
