@@ -29,10 +29,11 @@ app.use(express.urlencoded({ extended: false }));
 app.use(methodOverride('_method'));
 // config to allow cookie parser
 app.use(cookieParser());
-// ===========specify routes and their reqs/res==========
 
+// ===========specify routes and their reqs/res==========
+// Route description: Add a note/sighting
 app.get('/note', (req, res) => {
-  if (req.cookies.loggedIn === undefined) {
+  if ((req.cookies.loggedIn === undefined) || (req.cookies.username === undefined)) {
     console.log('user is not a member');
     res.status(403).send('Only members can post observations. Please or sign up to proceed.');
     return;
@@ -65,37 +66,69 @@ app.get('/note', (req, res) => {
 });
 
 app.post('/note', (req, res) => {
+  // get params from the ejs form checkboxes on behavior
   console.log('request to post  came in');
-  const behaviors = req.body.behavior_ids;
+  let behaviors = req.body.behavior_ids;
+  /* if there only 1 checkbox was ticked, the values is not stored in an array;
+  Proceed to store the value it in an array. */
+  if (Array.isArray(behaviors) === false) {
+    console.log('not an array');
+    behaviors = [behaviors];
+  }
+  // get params from the dropdown list on species
   const {
-    fDate, fBehavior, fFlockSize, fSpeciesId,
+    fDate, fFlockSize, fSpeciesId,
   } = req.body;
-  const sqlQuery = 'INSERT INTO notes (date, behavior, flock_size, user_id, species_id) VALUES ($1, $2, $3, $4, $5) RETURNING *';
-  const inputData = [`${fDate}`, `${fBehavior}`, `${fFlockSize}`, `${req.cookies.username}`, `${fSpeciesId}`];
-  pool.query(sqlQuery, inputData, (err, result) => {
-    if (err) {
-      console.log(`sql query error: ${err}`);
-      return;
+
+  /* create an sql query that obtains the id from userCredentials,
+  then update this FK in notes; */
+  console.log('req.cookies.username is:');
+  console.log(req.cookies.username);
+  const queryUserIdBasedOnCookie = `SELECT * FROM userCredentials WHERE email='${req.cookies.username}'`;
+
+  // execute query to get the user's id from userCredentials;
+  pool.query(queryUserIdBasedOnCookie, (userCredQueryErr, userCredQueryResult) => {
+    if (userCredQueryErr) {
+      console.log(`query err: ${userCredQueryResult.rows[0].id}`);
     }
-    behaviors.forEach((element) => {
-      const insertBehaviorIds = `INSERT INTO notes_behaviors_table (note_id, behavior_id) VALUES(${result.rows[0].id}, ${element}) RETURNING *`;
-      pool.query(insertBehaviorIds, (insertQueryErr, insertQueryResult) => {
-        if (insertQueryErr) {
-          console.log(`query error: ${insertQueryErr}`);
-          return;
-        }
-        console.table(insertQueryResult.rows);
-        console.log('successfully added');
+    // user's id according to userCredentials is:
+    console.log('userCredentials.Id to be to be inserted into the notes table is:');
+    console.log(userCredQueryResult.rows[0]);
+
+    /* set a sql query that gets bird-watching details submitted by the ejs form     */
+    const insertValuesIntoNotes = 'INSERT INTO notes (date, behavior_id, flock_size, user_id, species_id) VALUES ($1, $2, $3, $4, $5) RETURNING *';
+    const inputData = [`${fDate}`, 100, `${fFlockSize}`, `${userCredQueryResult.rows[0].id}`, `${fSpeciesId}`];
+
+    // execute the sql query
+    pool.query(insertValuesIntoNotes, inputData, (inserQueryIntoNotesErr, result) => {
+      if (inserQueryIntoNotesErr) {
+        console.log(`sql query error: ${inserQueryIntoNotesErr}`);
+        return;
+      }
+      console.log('behaviors is: ');
+      console.log(behaviors);
+      // create a new row for each time a notes.id has a unique notes_behaviors_table id.
+      behaviors.forEach((element) => {
+        const insertBehaviorIds = `INSERT INTO notes_behaviors_table (note_id, behavior_id) VALUES(${result.rows[0].id}, ${element}) RETURNING *`;
+        pool.query(insertBehaviorIds, (insertQueryErr, insertQueryResult) => {
+          if (insertQueryErr) {
+            console.log(`query error: ${insertQueryErr}`);
+            return;
+          }
+          console.table(insertQueryResult.rows);
+          console.log('successfully added');
+        });
       });
+      console.log('redirecting page now');
+      res.redirect(`/note/${result.rows[0].id}`);
     });
-    console.log('redirecting page now');
-    res.redirect(`/note/${result.rows[0].id}`);
   });
 });
 
+// Route description: display a specific note
 app.get('/note/:id', (req, res) => {
   const { id } = req.params;
-  // set the query
+  // set a query to get info from notes
   const sqlQuery = `SELECT * FROM notes WHERE id=${Number(id)}`;
   console.log(`sql query is: ${sqlQuery}`);
 
@@ -106,12 +139,73 @@ app.get('/note/:id', (req, res) => {
       res.status(503).send('Sorry, not found!');
       return;
     }
-    // console.table(result.rows[0]);
-    console.log(result.rows[0]);
-    res.render('note-id', result.rows[0]);
+    // set a variable that succintly captures result.rows[0];
+    const data = { notesData: result.rows[0] };
+    console.log(data);
+
+    // display comments
+    const queryForComments = `SELECT comments FROM notes_userCredentials_table WHERE notes_id=${id}`;
+    // execute the query
+    pool.query(queryForComments, (queryForCommentsErr, queryForCommentsResult) => {
+      if (queryForCommentsErr) {
+        console.log(`Query ereror: ${queryForComments}`);
+        return;
+      }
+      console.log('queryForCommentsResult is:');
+      console.log(queryForCommentsResult.rows);
+      if (queryForCommentsResult.rows.length === 0) {
+        data.commentsData = [{ comments: 'No comments found' }];
+      } else {
+        data.commentsData = queryForCommentsResult.rows;
+      }
+      console.log('final \'data\' to add into ejs data is:');
+      console.log(data);
+      res.render('note-id', data);
+    });
   });
 });
 
+// Route description: display a specific note
+app.get('/note/:id', (req, res) => {
+  const { id } = req.params;
+  // set a query to get info from notes
+  const sqlQuery = `SELECT * FROM notes WHERE id=${Number(id)}`;
+  console.log(`sql query is: ${sqlQuery}`);
+
+  // execute the query
+  pool.query(sqlQuery, (queryErr, result) => {
+    if (queryErr) {
+      console.log(`query error: ${queryErr}`);
+      res.status(503).send('Sorry, not found!');
+      return;
+    }
+    // set a variable that succintly captures result.rows[0];
+    const data = { notesData: result.rows[0] };
+    console.log(data);
+
+    // display comments
+    const queryForComments = `SELECT comments FROM notes_userCredentials_table WHERE notes_id=${id}`;
+    // execute the query
+    pool.query(queryForComments, (queryForCommentsErr, queryForCommentsResult) => {
+      if (queryForCommentsErr) {
+        console.log(`Query ereror: ${queryForComments}`);
+        return;
+      }
+      console.log('queryForCommentsResult is:');
+      console.log(queryForCommentsResult.rows);
+      if (queryForCommentsResult.rows.length === 0) {
+        data.commentsData = [{ comments: 'No comments found' }];
+      } else {
+        data.commentsData = queryForCommentsResult.rows;
+      }
+      console.log('final \'data\' to add into ejs data is:');
+      console.log(data);
+      res.render('note-id', data);
+    });
+  });
+});
+
+// Route description: Display home page
 app.get('/', (req, res) => {
   console.log('request for \'/\' came in');
   // set the sql query
@@ -129,6 +223,21 @@ app.get('/', (req, res) => {
   });
 });
 
+// delete recordings on main page and database
+app.delete('/:index/delete', (req, res) => {
+  const { index } = req.params;
+  console.log(`index is: ${index}`);
+  const sqlQuery = `DELETE FROM notes WHERE id=${index}`;
+  pool.query(sqlQuery, (err, result) => {
+    if (err) {
+      console.log(`query err: ${err}`);
+    }
+    console.table(result.rows);
+    res.redirect('/');
+  });
+});
+
+// Route description: register user signup
 app.get('/signUp', (req, res) => {
   res.render('signUp');
 });
@@ -149,11 +258,11 @@ app.post('/signUp', (req, res) => {
   });
 });
 
+// Route description: User login/logout
 app.get('/login', (req, res) => {
   res.render('login');
   console.log('completed rendering get /login');
 });
-
 app.post('/login', (req, res) => {
   console.log('commencing post /login');
   const { fUserName, fPassword } = req.body;
@@ -195,25 +304,128 @@ app.post('/login', (req, res) => {
     }
   });
 });
-
 app.get('/logout', (req, res) => {
   res.clearCookie('loggedIn');
   res.clearCookie('username');
   res.redirect('/');
 });
 
-// delete recordings on main page and database
-app.delete('/:index/delete', (req, res) => {
-  const { index } = req.params;
-  console.log(`index is: ${index}`);
-  const sqlQuery = `DELETE FROM notes WHERE id=${index}`;
+// Route description: Display list of behaviors
+app.get('/behaviors', (req, res) => {
+  const sqlQuery = 'SELECT * FROM behaviors_table';
   pool.query(sqlQuery, (err, result) => {
     if (err) {
-      console.log(`query err: ${err}`);
+      console.log(`query error: ${err}`);
+      return;
     }
-    console.table(result.rows);
+    const data = { behaviorDescription: result.rows };
+    console.log('data is: ');
+    console.log(data);
+    // res.render('behaviors', data);
+  });
+});
+
+// Route description: Display notes with a specified  behavior
+app.get('/behaviors/:index', (req, res) => {
+  const { index } = req.params;
+  const sqlQuery = `SELECT * FROM notes_behaviors_table WHERE behavior_id= ${index}`;
+
+  pool.query(sqlQuery, (err, result) => {
+    if (err) {
+      console.log(`query error: ${result}`);
+      return;
+    }
+    const behaviorId = result.rows;
+    console.log('behavior id is :');
+    console.log(behaviorId);
+    let behaviorIndexData = [];
+    // initialise a counter that will be used to trigger the rendering
+    let counter = 0;
+    // loop thru the notes table to capture each row where the id matches result.rows (prev query)
+    behaviorId.forEach((element) => {
+      /* this should have been an inner join (with a where statement,
+      to allow the behavior to be shown on the ejs */
+      const notesQuery = `SELECT * FROM notes where id=${element.note_id}`;
+      pool.query(notesQuery, (queryErr, queryResult) => {
+        if (queryErr) {
+          console.log(`query error: ${queryErr}`);
+        }
+        const notesQueryResults = queryResult.rows[0];
+        behaviorIndexData = [...behaviorIndexData, notesQueryResults];
+        console.log(behaviorIndexData);
+        counter += 1;
+        console.log(`counter is: ${counter}`);
+
+        if (counter === behaviorId.length) {
+          console.log('about to render...');
+          res.render('behaviors-index', { obj: behaviorIndexData });
+        }
+      });
+    });
+  });
+});
+
+// Route description: Allow a logged-in user to create a new species
+app.get('/species', (req, res) => {
+  if (req.cookies.loggedIn === undefined) {
+    console.log('user is not a member');
+    res.status(403).send('Sorry, only members can update the site. Plesae sign up or login to proceed');
+  }
+  res.render('species');
+});
+app.post('/species', (req, res) => {
+  const { fSpeciesName, fScientificName } = req.body;
+  const insertNewSpeciesData = `INSERT INTO species (name, scientific_name) VALUES ('${fSpeciesName}', '${fScientificName}') RETURNING *`;
+  pool.query(insertNewSpeciesData, (insertNewSpeciesDataErr, insertNewSpeciesDataResult) => {
+    if (insertNewSpeciesDataErr) {
+      console.log(`Query Error: ${insertNewSpeciesDataErr}`);
+      return;
+    }
+    console.log('successfully added:');
+    console.table(insertNewSpeciesDataResult.rows[0]);
     res.redirect('/');
   });
 });
 
+app.post('/note/:id/comment', (req, res) => {
+  if ((req.cookies.loggedIn === undefined) || (req.cookies.username === undefined)) {
+    console.log('user is not a member');
+    // res.status(403).send('Only members can post observations. Please or sign up to proceed.');
+    res.status(403).render('sorry');
+    return;
+  }
+  console.log('post request note/:id/comment came in');
+  // get the comment content from the form
+  const { fComment } = req.body;
+  const { id } = req.params;
+  console.log('id is:');
+  console.log(id);
+
+  // use user's cookies to query database for his id
+  const nameOfCurrentUser = req.cookies.username;
+  const queryForUserId = `SELECT id FROM userCredentials WHERE email='${nameOfCurrentUser}'`;
+  // execute the query
+  pool.query(queryForUserId, (queryForUserIdErr, queryForUserIdResult) => {
+    if (queryForUserIdErr) {
+      console.log(`Query Error: ${queryForUserIdResult}`);
+    }
+    const userId = queryForUserIdResult.rows[0].id;
+
+    console.log('userId is: ');
+    console.log(userId);
+
+    // set sqlQuery to insert comment into comments db
+    const insertComments = `INSERT INTO notes_userCredentials_table (notes_id, userCredentials_id,comments) VALUES (${id}, ${userId},'${fComment}')`;
+    console.log('insert comments is:');
+    console.log(insertComments);
+
+    pool.query(insertComments, (insertCommentsErr, insertCommentsResult) => {
+      if (insertCommentsErr) {
+        console.log(`Query Error: ${insertCommentsResult}`);
+      }
+      // console.table(insertCommentsResult.rows[0]);
+      res.redirect(`/note/${id}`);
+    });
+  });
+});
 app.listen(PORT);

@@ -1,0 +1,26 @@
+<%-include('partials/head.ejs', {stylesheet: '/species.css'})%>
+<body>
+    <%-include('partials/navBar.ejs')%>
+
+  <div class= 'container'>
+    <div class='row'>
+      <div class='col'>
+        Create new species: 
+      </div>
+    </div>
+    <div class='row'>
+      <div class='col'>
+        <form action= '/species' method= 'POST'>
+          <label for="fSpeciesName"> Species name: </label>
+          <input type='text' name='fSpeciesName' id='fSpeciesName'>
+          <label for='fScientificName'>Scientific name: </label>
+          <input type='text' name='fScientificName' id='fScientificName'>
+          <input type='submit' value='submit'>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <%-include('partials/footer.ejs')%>
+</body>
+</html>

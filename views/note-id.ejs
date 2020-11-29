@@ -14,7 +14,7 @@
       <div class="row">
         <div class="col" id="mainCol1">
           <div class="row">
-            <div class="col-sm-12 col-md-6">Date: <%=date%></div>
+            <div class="col-sm-12 col-md-6">Date: <%=notesData.date%></div>
             <div class="col-sm-12 col-md-6">
               Location: <%#=city%>, <%#=state%>
             </div>
@@ -24,16 +24,35 @@
       <div class="row">
         <div class="col" id="mainCol2">
           <div class="row">
-            <div class="col-sm-12 col-md-6">Flock size: <%=flock_size%></div>
-            <div class="col-sm-12 col-md-6">Species: <%=species_id%></div>
+            <div class="col-sm-12 col-md-6">Flock size: <%=notesData.flock_size%></div>
+            <div class="col-sm-12 col-md-6">Species: <%=notesData.species_id%></div>
           </div>
         </div>
       </div>
       <div class="row">
-        <div class="col" id="mainCol3">Behavior: <%=behavior%></div>
+        <div class="col" id="mainCol3">Behavior: <%=notesData.behavior_id%></div>
       </div>
       <div class="row">
         <div class="col" id="mainCol4">Details<br /><%#=text%></div>
+      </div>
+      <div class="row">
+        <div class="col-8" id="readComments">
+
+          <ol>
+            <%commentsData.forEach(element => { %>
+            <li>
+              <%=element.comments%></li>
+              <%}); %>
+          </ol>
+        
+        </div>
+        <div class="col-4" id="submitComments">
+          <form action='/note/<%=notesData.id%>/comment' method='POST'>
+          <label for='fComment'>Submit new comment: </label>
+          <input type='text' name='fComment' id='fComment'>
+          <input type='submit' value='submit'> 
+          </form>
+        </div>
       </div>
       <div class="row">
         <div class="col" id="mainCol5">

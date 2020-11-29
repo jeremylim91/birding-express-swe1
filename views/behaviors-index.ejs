@@ -1,0 +1,24 @@
+    <%-include('partials/head.ejs', {stylesheet: '/behaviors-index.css'})%>
+  <body>
+    <%-include('partials/navBar.ejs')%>
+     
+    <div class="container">
+          <div class="row">
+            <div class="col">
+              <h1>Sightings by behavior: </h1>
+              <ul>
+                <%obj.forEach((element) => {%>
+                <li>
+                  <a href="#<%#=element.globalIndex%>"
+                    ><%=element.id%>
+                  </a>
+                </li>
+                <% }); %>
+              </ul>
+            </div>
+          </div>
+        </div>
+    <%-include('partials/footer.ejs')%>
+    
+  </body>
+</html>
