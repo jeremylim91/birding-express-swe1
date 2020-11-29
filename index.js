@@ -35,7 +35,7 @@ app.use(cookieParser());
 app.get('/note', (req, res) => {
   if ((req.cookies.loggedIn === undefined) || (req.cookies.username === undefined)) {
     console.log('user is not a member');
-    res.status(403).send('Only members can post observations. Please or sign up to proceed.');
+    res.status(403).render('sorry');
     return;
   }
   // get species from the species table to display the  dropdown
@@ -66,8 +66,8 @@ app.get('/note', (req, res) => {
 });
 
 app.post('/note', (req, res) => {
-  // get params from the ejs form checkboxes on behavior
   console.log('request to post  came in');
+  // get params from the ejs form checkboxes on behavior
   let behaviors = req.body.behavior_ids;
   /* if there only 1 checkbox was ticked, the values is not stored in an array;
   Proceed to store the value it in an array. */
@@ -96,8 +96,8 @@ app.post('/note', (req, res) => {
     console.log(userCredQueryResult.rows[0]);
 
     /* set a sql query that gets bird-watching details submitted by the ejs form     */
-    const insertValuesIntoNotes = 'INSERT INTO notes (date, behavior_id, flock_size, user_id, species_id) VALUES ($1, $2, $3, $4, $5) RETURNING *';
-    const inputData = [`${fDate}`, 100, `${fFlockSize}`, `${userCredQueryResult.rows[0].id}`, `${fSpeciesId}`];
+    const insertValuesIntoNotes = 'INSERT INTO notes (date, flock_size, user_id, species_id) VALUES ($1, $2, $3, $4, $5) RETURNING *';
+    const inputData = [`${fDate}`, `${fFlockSize}`, `${userCredQueryResult.rows[0].id}`, `${fSpeciesId}`];
 
     // execute the sql query
     pool.query(insertValuesIntoNotes, inputData, (inserQueryIntoNotesErr, result) => {
@@ -127,80 +127,67 @@ app.post('/note', (req, res) => {
 
 // Route description: display a specific note
 app.get('/note/:id', (req, res) => {
+  console.log('received request to get /note/:id');
   const { id } = req.params;
-  // set a query to get info from notes
-  const sqlQuery = `SELECT * FROM notes WHERE id=${Number(id)}`;
-  console.log(`sql query is: ${sqlQuery}`);
+  // set a query to get info from notes and note_behaviors_table
+  // const sqlQuery = `SELECT * FROM notes WHERE id=${Number(id)}`;
+  // console.log(`sql query is: ${sqlQuery}`);
+
+  console.log('id is: ');
+  console.log(id);
+
+  // const sqlQuery = `SELECT * FROM notes INNER JOIN notes_behaviors_table on notes.id=notes_behaviors_table.note_id WHERE notes.id=${id}`;
+  const sqlQuery = `SELECT * FROM notes_behaviors_table INNER JOIN notes ON notes.id=notes_behaviors_table.note_id WHERE notes.id=${id}`;
+  console.log('sqlQuery is:');
+  console.log(sqlQuery);
 
   // execute the query
   pool.query(sqlQuery, (queryErr, result) => {
+    console.log('started querying');
     if (queryErr) {
       console.log(`query error: ${queryErr}`);
-      res.status(503).send('Sorry, not found!');
       return;
     }
+    console.log('result.rows for inner join is:');
+    console.table(result.rows);
+
     // set a variable that succintly captures result.rows[0];
-    const data = { notesData: result.rows[0] };
+    const data = { notesData: result.rows };
+    console.log('data-1: is');
     console.log(data);
 
-    // display comments
-    const queryForComments = `SELECT comments FROM notes_userCredentials_table WHERE notes_id=${id}`;
-    // execute the query
-    pool.query(queryForComments, (queryForCommentsErr, queryForCommentsResult) => {
-      if (queryForCommentsErr) {
-        console.log(`Query ereror: ${queryForComments}`);
-        return;
-      }
-      console.log('queryForCommentsResult is:');
-      console.log(queryForCommentsResult.rows);
-      if (queryForCommentsResult.rows.length === 0) {
-        data.commentsData = [{ comments: 'No comments found' }];
-      } else {
-        data.commentsData = queryForCommentsResult.rows;
-      }
-      console.log('final \'data\' to add into ejs data is:');
-      console.log(data);
-      res.render('note-id', data);
-    });
-  });
-});
+    data.listOfBehaviors = [];
+    data.notesData.forEach((element) => {
+    // get the behaviors' names;
+      const getBehaviorNames = `SELECT * FROM behaviors_table WHERE id=${element.behavior_id}`;
+      pool.query(getBehaviorNames, (getBehaviorNamesErr, getBehaviorNamesResult) => {
+        if (getBehaviorNamesErr) {
+          console.log(`query error: ${getBehaviorNamesResult}`);
+        }
+        data.listOfBehaviors.push(getBehaviorNamesResult.rows[0]);
+        console.log('data.listOfBehaviors is:');
+        console.log(data.listOfBehaviors);
 
-// Route description: display a specific note
-app.get('/note/:id', (req, res) => {
-  const { id } = req.params;
-  // set a query to get info from notes
-  const sqlQuery = `SELECT * FROM notes WHERE id=${Number(id)}`;
-  console.log(`sql query is: ${sqlQuery}`);
-
-  // execute the query
-  pool.query(sqlQuery, (queryErr, result) => {
-    if (queryErr) {
-      console.log(`query error: ${queryErr}`);
-      res.status(503).send('Sorry, not found!');
-      return;
-    }
-    // set a variable that succintly captures result.rows[0];
-    const data = { notesData: result.rows[0] };
-    console.log(data);
-
-    // display comments
-    const queryForComments = `SELECT comments FROM notes_userCredentials_table WHERE notes_id=${id}`;
-    // execute the query
-    pool.query(queryForComments, (queryForCommentsErr, queryForCommentsResult) => {
-      if (queryForCommentsErr) {
-        console.log(`Query ereror: ${queryForComments}`);
-        return;
-      }
-      console.log('queryForCommentsResult is:');
-      console.log(queryForCommentsResult.rows);
-      if (queryForCommentsResult.rows.length === 0) {
-        data.commentsData = [{ comments: 'No comments found' }];
-      } else {
-        data.commentsData = queryForCommentsResult.rows;
-      }
-      console.log('final \'data\' to add into ejs data is:');
-      console.log(data);
-      res.render('note-id', data);
+        // display comments
+        const queryForComments = `SELECT comments FROM notes_userCredentials_table WHERE notes_id=${id}`;
+        // execute the query
+        pool.query(queryForComments, (queryForCommentsErr, queryForCommentsResult) => {
+          if (queryForCommentsErr) {
+            console.log(`Query ereror: ${queryForComments}`);
+            return;
+          }
+          console.log('queryForCommentsResult is:');
+          console.log(queryForCommentsResult.rows);
+          if (queryForCommentsResult.rows.length === 0) {
+            data.commentsData = [{ comments: 'No comments found' }];
+          } else {
+            data.commentsData = queryForCommentsResult.rows;
+          }
+          console.log('final \'data\' to add into ejs data is:');
+          console.log(data);
+          res.render('note-id', data);
+        });
+      });
     });
   });
 });

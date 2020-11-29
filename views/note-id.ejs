@@ -14,9 +14,9 @@
       <div class="row">
         <div class="col" id="mainCol1">
           <div class="row">
-            <div class="col-sm-12 col-md-6">Date: <%=notesData.date%></div>
+            <div class="col-sm-12 col-md-6">Date: <%=notesData[0].date%></div>
             <div class="col-sm-12 col-md-6">
-              Location: <%#=city%>, <%#=state%>
+              Location: MacRitchie reservoir, Singapore 
             </div>
           </div>
         </div>
@@ -24,19 +24,28 @@
       <div class="row">
         <div class="col" id="mainCol2">
           <div class="row">
-            <div class="col-sm-12 col-md-6">Flock size: <%=notesData.flock_size%></div>
-            <div class="col-sm-12 col-md-6">Species: <%=notesData.species_id%></div>
+            <div class="col-sm-12 col-md-6">
+              Flock size: <%=notesData[0].flock_size%>
+            </div>
+            <div class="col-sm-12 col-md-6">
+              Species: <%=notesData[0].species_id%>
+            </div>
           </div>
         </div>
       </div>
       <div class="row">
-        <div class="col" id="mainCol3">Behavior: <%=notesData.behavior_id%></div>
+        <div class="col" id="mainCol3">Behavior:
+          <%listOfBehaviors.forEach(element=>{%>
+            <span><%=element.description%> </span>
+          <%}) %>
+        </div>
       </div>
       <div class="row">
         <div class="col" id="mainCol4">Details<br /><%#=text%></div>
       </div>
       <div class="row">
         <div class="col-8" id="readComments">
+          <h5>Comments</h5>
 
           <ol>
             <%commentsData.forEach(element => { %>
@@ -47,7 +56,7 @@
         
         </div>
         <div class="col-4" id="submitComments">
-          <form action='/note/<%=notesData.id%>/comment' method='POST'>
+          <form action='/note/<%=notesData[0].id%>/comment' method='POST'>
           <label for='fComment'>Submit new comment: </label>
           <input type='text' name='fComment' id='fComment'>
           <input type='submit' value='submit'> 

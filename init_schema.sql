@@ -1,7 +1,6 @@
 CREATE TABLE notes (
 id            SERIAL PRIMARY KEY,   
 date          DATE,                   --Record the date, time and day of the week you are making the observation,
-behavior_id   INTEGER,                   --Take notes on what the bird was doing as you observed it.
 flock_size    INTEGER,                -- Try to estimate how many birds are in the flock.
 user_id       INTEGER,
 species_id    INTEGER
