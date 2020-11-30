@@ -1,0 +1,69 @@
+
+  <%-include('partials/head.ejs', {stylesheet: '/note.css'})%>
+
+  <body>
+      <%-include('partials/navBar.ejs')%>
+
+
+
+    <div class="container">
+      <form action="/note" method="POST">
+      <div class="row">
+        <div class="col-3">
+          <label for="fDate">Date: </label>
+        </div>
+        <div class="col-6">
+          <input type="date" id="fDate" name="fDate" required />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-3">
+            <label for="fFlockSize">Flock Size: </label>
+        </div>
+        <div class="col-6">
+            <input
+              type="number"
+              id="fFlockSize"
+              name="fFlockSize"
+              required/>        
+          </div>
+      </div>
+      <div class="row">
+        <div class="col-3">
+            <label for ='fSpeciesId'>Species: </label><br>
+            <div class='addNewSpecies'>Can't find what you're looking for? <a href='/species'>Add new species</a>
+            </div>
+            
+        </div>
+        <div class="col-6">
+          <select name ='fSpeciesId' id= 'fSpeciesId'>
+              <%species.forEach(element => { %>
+                <option value= "<%=element.id%>"><%=element.name%></option>
+             <% }); %>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-3">
+          <label>Observed behaviors: : </label>
+        </div>
+        <div class="col-6">
+          <% behaviors.forEach((element) => { %>
+              <input type="checkbox" name="behavior_ids" value="<%= element.id %>" />
+              <label><%= element.description%> || </label>
+            <% }); %>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-3">
+            <input type="submit" value="Submit" />
+        </div>
+        
+      </div>
+      </form>
+    </div>
+
+    
+    <%-include('partials/footer.ejs')%>
+  </body>
+</html>

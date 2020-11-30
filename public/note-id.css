@@ -1,13 +1,13 @@
 body {
-  background-color: #5a5a6e;
+  background-color: #f8f9fa;
   /* background-image: url("https://assets.dryicons.com/uploads/icon/svg/5158/662be99f-430e-4161-8559-e0d3c952ddab.svg"); */
 }
 
 .container {
-  max-width: 800px;
-  border: solid rgba(255, 255, 255, 0.63);
+  max-width: 1000px;
+  border: solid #f8f9fa;
   margin-top: 20px;
-  background-color: #f8f9fa;
+  background-color: #f8f9faf3;
 }
 .unorderedList {
   background-color: rgba(255, 255, 255, 0.63);
@@ -37,4 +37,23 @@ body {
 #mainCol5 {
   display: flex;
   justify-content: flex;
+}
+.hidden-row {
+  display: none;
+}
+#submitButton {
+  float: right;
+}
+textarea {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+#commentBox {
+  max-height: 100px;
+  overflow: auto;
+}
+img {
+  position: absolute;
+  z-index: -1;
 }

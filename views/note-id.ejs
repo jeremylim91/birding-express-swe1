@@ -4,7 +4,9 @@
         <%-include('partials/navBar.ejs')%>
 
     <%#- include('partials/navBar')%>
-
+    <div>
+      <img src="https://cdn.dribbble.com/users/14674/screenshots/8502111/media/0b8244a63b67fa6eec35b03f2dfb0308.png">
+    </div>
     <div class="container">
       <div class="row">
         <div class="col" id="headerCol">
@@ -28,7 +30,7 @@
               Flock size: <%=notesData[0].flock_size%>
             </div>
             <div class="col-sm-12 col-md-6">
-              Species: <%=notesData[0].species_id%>
+              Species: <%=notesData[0].species_name%>
             </div>
           </div>
         </div>
@@ -36,18 +38,15 @@
       <div class="row">
         <div class="col" id="mainCol3">Behavior:
           <%listOfBehaviors.forEach(element=>{%>
-            <span><%=element.description%> </span>
+            <span><%=element.description%> || </span>
           <%}) %>
         </div>
       </div>
       <div class="row">
-        <div class="col" id="mainCol4">Details<br /><%#=text%></div>
-      </div>
-      <div class="row">
-        <div class="col-8" id="readComments">
+        <div class="col-7" id="readComments">
           <h5>Comments</h5>
 
-          <ol>
+          <ol id='commentBox'>
             <%commentsData.forEach(element => { %>
             <li>
               <%=element.comments%></li>
@@ -55,15 +54,16 @@
           </ol>
         
         </div>
-        <div class="col-4" id="submitComments">
+        <div class="col-5" id="submitComments">
           <form action='/note/<%=notesData[0].id%>/comment' method='POST'>
-          <label for='fComment'>Submit new comment: </label>
-          <input type='text' name='fComment' id='fComment'>
-          <input type='submit' value='submit'> 
+          <label for='fComment'>New comment: </label>
+          <textarea id='fComment' name='fComment' placeholder='Insert comment here...'></textarea>
+          <!-- <input type='text' name='fComment' id='fComment'> -->
+          <input type='submit' value='submit' id='submitButton' class="btn btn-info"> 
           </form>
         </div>
       </div>
-      <div class="row">
+      <div class="row hidden-row">
         <div class="col" id="mainCol5">
           <div class="col">Logged: <%#=dateStamp%>, <%#=timeStamp%></div>
           <div class="col" id="buttonCol">

@@ -46,8 +46,8 @@
                  
             <div>Observed behaviors: </div>
             <% behaviors.forEach((element) => { %>
-            <label><%= element.description %></label>
-            <input type="checkbox" name="behavior_ids" value="<%= element.id %>" />
+              <input type="checkbox" name="behavior_ids" value="<%= element.id %>" />
+              <label><%= element.description%> || </label>
             <% }); %>
             <br>
             <input type="submit" value="Submit" />

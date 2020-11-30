@@ -60,7 +60,7 @@ app.get('/note', (req, res) => {
 
       console.log('data is:');
       console.log(data);
-      res.render('note', data);
+      res.render('note2', data);
     });
   });
 });
@@ -96,7 +96,7 @@ app.post('/note', (req, res) => {
     console.log(userCredQueryResult.rows[0]);
 
     /* set a sql query that gets bird-watching details submitted by the ejs form     */
-    const insertValuesIntoNotes = 'INSERT INTO notes (date, flock_size, user_id, species_id) VALUES ($1, $2, $3, $4, $5) RETURNING *';
+    const insertValuesIntoNotes = 'INSERT INTO notes (date, flock_size, user_id, species_id) VALUES ($1, $2, $3, $4) RETURNING *';
     const inputData = [`${fDate}`, `${fFlockSize}`, `${userCredQueryResult.rows[0].id}`, `${fSpeciesId}`];
 
     // execute the sql query
@@ -167,25 +167,42 @@ app.get('/note/:id', (req, res) => {
         data.listOfBehaviors.push(getBehaviorNamesResult.rows[0]);
         console.log('data.listOfBehaviors is:');
         console.log(data.listOfBehaviors);
+        // get the species name
 
-        // display comments
-        const queryForComments = `SELECT comments FROM notes_userCredentials_table WHERE notes_id=${id}`;
-        // execute the query
-        pool.query(queryForComments, (queryForCommentsErr, queryForCommentsResult) => {
-          if (queryForCommentsErr) {
-            console.log(`Query ereror: ${queryForComments}`);
-            return;
+        const queryForSpeciesName = `SELECT species.name FROM species INNER JOIN notes ON notes.species_id=species.id WHERE notes.id=${id}`;
+        // create an array to hold the list of species; store in the data object
+        data.listOfSpecies = [];
+        pool.query(queryForSpeciesName, (queryForSpeciesNameErr, queryForSpeciesNameResult) => {
+          if (queryForSpeciesNameErr) {
+            console.log(`Query Error: ${queryForSpeciesNameResult}`);
           }
-          console.log('queryForCommentsResult is:');
-          console.log(queryForCommentsResult.rows);
-          if (queryForCommentsResult.rows.length === 0) {
-            data.commentsData = [{ comments: 'No comments found' }];
-          } else {
-            data.commentsData = queryForCommentsResult.rows;
-          }
-          console.log('final \'data\' to add into ejs data is:');
+          console.log('species name is/are:');
+          console.log(queryForSpeciesNameResult.rows);
+          data.notesData.forEach((notesDataElement) => {
+            notesDataElement.species_name = queryForSpeciesNameResult.rows[0].name;
+          });
+          console.log('data after adding list of species:');
           console.log(data);
-          res.render('note-id', data);
+
+          // display comments
+          const queryForComments = `SELECT comments FROM notes_userCredentials_table WHERE notes_id=${id}`;
+          // execute the query
+          pool.query(queryForComments, (queryForCommentsErr, queryForCommentsResult) => {
+            if (queryForCommentsErr) {
+              console.log(`Query ereror: ${queryForComments}`);
+              return;
+            }
+            console.log('queryForCommentsResult is:');
+            console.log(queryForCommentsResult.rows);
+            if (queryForCommentsResult.rows.length === 0) {
+              data.commentsData = [{ comments: 'No comments found' }];
+            } else {
+              data.commentsData = queryForCommentsResult.rows;
+            }
+            console.log('final \'data\' to add into ejs data is:');
+            console.log(data);
+            res.render('note-id', data);
+          });
         });
       });
     });
@@ -197,6 +214,7 @@ app.get('/', (req, res) => {
   console.log('request for \'/\' came in');
   // set the sql query
   const sqlQuery = 'SELECT * FROM notes';
+  // const sqlQuery = 'SELECT * FROM notes INNER JOIN notes_behaviors_table ON notes.id=notes_behaviors_table.note_id';
   // execute the query
   pool.query(sqlQuery, (queryErr, result) => {
     if (queryErr) {
@@ -308,7 +326,7 @@ app.get('/behaviors', (req, res) => {
     const data = { behaviorDescription: result.rows };
     console.log('data is: ');
     console.log(data);
-    // res.render('behaviors', data);
+    res.render('behaviors', data);
   });
 });
 
